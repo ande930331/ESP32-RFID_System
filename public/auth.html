@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>授權用戶管理</title>
+  <style>
+    :root {
+      font-size: 16px;
+    }
+
+    @media (max-width: 600px) {
+      :root {
+        font-size: 15px;
+      }
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f6f8;
+      padding: 2.5rem;
+      margin: 0;
+      color: #333;
+    }
+
+    h2 {
+      margin-bottom: 1.2rem;
+      text-align: center;
+      color: #2c3e50;
+      font-size: 1.8rem;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+
+    select, input[type="text"] {
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      flex: 1 1 100%;
+      max-width: 280px;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      background-color: #2d8cf0;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #1e6bb8;
+    }
+
+    .search-container {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    #searchInput {
+      padding: 0.6rem 0.9rem;
+      width: 90%;
+      max-width: 280px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      transition: box-shadow 0.2s;
+    }
+
+    #searchInput:focus {
+      box-shadow: 0 0 5px rgba(45, 140, 240, 0.5);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 500px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #eee;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #f0f2f5;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f9fafc;
+    }
+
+    .menu {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .card {
+      display: inline-block;
+      background-color: #fff;
+      padding: 1.25rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: #2d8cf0;
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .card p {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h2>從歷史紀錄新增授權用戶</h2>
+  <form id="authForm">
+    <select id="uidSelect" required></select>
+    <input type="text" id="username" placeholder="使用者名稱" required />
+    <button type="submit">新增授權</button>
+  </form>
+
+  <h2>目前授權名單</h2>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 搜尋使用者名稱..." />
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>UID</th><th>名稱</th><th>操作</th></tr>
+      </thead>
+      <tbody id="authList"></tbody>
+    </table>
+  </div>
+
+  <div class="menu">
+    <a href="/index.html" class="card">
+      <h2>回主頁</h2>
+      <p>RFID 系統首頁</p>
+    </a>
+  </div>
+
+  <script>
+    async function loadUnauthorizedUIDs() {
+      const res = await fetch('/api/unauthorized-uids');
+      const data = await res.json();
+      const select = document.getElementById('uidSelect');
+      select.innerHTML = '';
+
+      if (data.length === 0) {
+        const option = document.createElement('option');
+        option.textContent = '（無可用 UID）';
+        option.disabled = true;
+        select.appendChild(option);
+        return;
+      }
+
+      data.forEach(uid => {
+        const option = document.createElement('option');
+        option.value = uid;
+        option.textContent = uid;
+        select.appendChild(option);
+      });
+    }
+
+    async function fetchAuthorized() {
+      const res = await fetch('/api/authorized');
+      const data = await res.json();
+      const tbody = document.getElementById('authList');
+      tbody.innerHTML = '';
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.uid}</td>
+          <td>
+            <span class="username-text">${row.username}</span>
+            <input type="text" class="username-input" style="display:none;" value="${row.username}" />
+          </td>
+          <td>
+            <button onclick="enableEdit(this, '${row.uid}')">修改</button>
+            <button onclick="deleteAuth('${row.uid}')">刪除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function deleteAuth(uid) {
+      if (confirm(`確定要刪除 ${uid}？`)) {
+        await fetch('/api/authorized/' + uid, { method: 'DELETE' });
+        await fetchAuthorized();
+        await loadUnauthorizedUIDs();
+      }
+    }
+
+    function enableEdit(button, uid) {
+      const row = button.closest('tr');
+      const span = row.querySelector('.username-text');
+      const input = row.querySelector('.username-input');
+
+      if (button.textContent === '修改') {
+        span.style.display = 'none';
+        input.style.display = 'inline-block';
+        button.textContent = '儲存';
+      } else {
+        const newName = input.value.trim();
+        if (!newName) return alert('名稱不能為空');
+
+        fetch('/api/authorized/' + uid, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: newName })
+        }).then(res => res.json()).then(result => {
+          if (result.success) {
+            span.textContent = newName;
+            span.style.display = 'inline';
+            input.style.display = 'none';
+            button.textContent = '修改';
+          } else {
+            alert('更新失敗');
+          }
+        });
+      }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const uid = document.getElementById('uidSelect').value;
+      const username = document.getElementById('username').value;
+      const res = await fetch('/api/authorized', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, username })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        document.getElementById('username').value = '';
+        await fetchAuthorized();
+        await loadUnauthorizedUIDs();
+      } else {
+        alert('⚠️ 新增失敗');
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', function () {
+      const keyword = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#authList tr');
+
+      rows.forEach(row => {
+        const nameCell = row.querySelector('.username-text');
+        const name = nameCell?.textContent.toLowerCase() || '';
+        row.style.display = name.includes(keyword) ? '' : 'none';
+      });
+    });
+
+    loadUnauthorizedUIDs();
+    fetchAuthorized();
+  </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>RFID 比例圖</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    #chartContainer {
+      max-width: 400px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    input[type="date"] {
+      padding: 8px;
+      margin-right: 10px;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 900px;
+    }
+    .input-group {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .menu {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .card {
+  display: block;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-decoration: none;
+  color: black;
+  width: 200px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: scale(1.05);
+}
+
+  </style>
+</head>
+<body>
+<div class="menu">
+  <a href="/index.html" class="card">
+    <h2>回主頁</h2>
+    <p>RFID 系統首頁</p>
+  </a>
+</div>
+
+  <div id="chartContainer">
+    <h2>單日進出比例圖</h2>
+    <input type="date" id="datePicker">
+    <button onclick="loadChart()">查詢</button>
+    <canvas id="pieChart" height="300"></canvas>
+  </div>
+  <div class="chart-container">
+    <h3>每日進出折線圖</h3>
+    <div class="input-group">
+      <label>起始日：<input type="date" id="startDate"></label>
+      <label>結束日：<input type="date" id="endDate"></label>
+      <button onclick="loadLineChart()">查詢</button>
+    </div>
+    <canvas id="lineChart"></canvas>
+  </div>
+  <script>
+    let chart;
+
+    function loadChart() {
+      const date = document.getElementById('datePicker').value;
+      if (!date) return alert("請選擇日期");
+
+      fetch(`/api/stats?date=${date}`)
+        .then(res => res.json())
+        .then(data => {
+          const inCount = data.IN || 0;
+          const outCount = data.OUT || 0;
+
+          const ctx = document.getElementById('pieChart').getContext('2d');
+          if (chart) chart.destroy();
+
+          chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: ['IN', 'OUT'],
+              datasets: [{
+                data: [inCount, outCount],
+                backgroundColor: ['#4caf50', '#f44336']
+              }]
+            },
+            options: {
+              plugins: {
+                title: {
+                  display: true,
+                  text: `${date} 進出比例`
+                },
+                legend: {
+                  position: 'bottom'
+                }
+              }
+            }
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          alert("查詢失敗，請確認後端服務有啟動");
+        });
+    }
+    function loadLineChart() {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (!start || !end) {
+        alert('請選擇起訖日期');
+        return;
+      }
+fetch(`/api/stats?start=${start}&end=${end}`)
+        .then(res => res.json())
+        .then(data => {
+          const labels = data.map(d => d.date);
+          const inData = data.map(d => d.IN);
+          const outData = data.map(d => d.OUT);
+
+          const ctx = document.getElementById('lineChart').getContext('2d');
+          if (window.lineChartInstance) {
+            window.lineChartInstance.destroy();
+          }
+
+          window.lineChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'IN',
+                  data: inData,
+                  borderColor: '#4caf50',
+                  backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  fill: true,
+                  tension: 0.3
+                },
+                {
+                  label: 'OUT',
+                  data: outData,
+                  borderColor: '#f44336',
+                  backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                  fill: true,
+                  tension: 0.3
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                title: {
+                  display: true,
+                  text: '每日進出折線圖'
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { stepSize: 1 }
+                }
+              }
+            }
+          });
+        });
+    }
+
+    // ✅ 預設查詢：今日 ~ +6天
+    window.onload = () => {
+  const today = new Date();
+  const sixDaysLater = new Date();
+  sixDaysLater.setDate(today.getDate() + 6);
+
+  const format = d => d.toISOString().split('T')[0];
+  document.getElementById('startDate').value = format(today);
+  document.getElementById('endDate').value = format(sixDaysLater);
+
+  loadChart();     // ✅ 修正這裡的函數名稱
+  loadLineChart();
+};
+
+  </script>
+</body>
+</html>

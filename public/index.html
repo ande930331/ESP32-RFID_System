@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFID 系統首頁</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f2f6fc;
+    margin: 0;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  h1 {
+    color: #1f3c88;
+    margin-bottom: 40px;
+    font-size: 2.2em;
+  }
+
+  .menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+  }
+
+  .card {
+    background: linear-gradient(135deg, #3498db, #6dd5ed);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    width: 220px;
+    padding: 30px 20px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+  }
+
+  .card h2 {
+    margin-bottom: 10px;
+    font-size: 1.4em;
+  }
+
+  .card p {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95em;
+  }
+
+  @media (max-width: 768px) {
+    .menu {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>RFID 系統首頁</h1>
+
+<div class="menu">
+  <a href="/logs.html" class="card">
+    <h2>刷卡紀錄</h2>
+    <p>即時資料與歷史紀錄</p>
+  </a>
+
+  <a href="/stats.html#statsChart" class="card">
+    <h2>進出統計</h2>
+    <p>每日進出資料圖表</p>
+  </a>
+
+  <a href="/auth.html" class="card">
+    <h2>授權用戶管理</h2>
+    <p>新增 / 刪除 / 修改 UID 授權</p>
+  </a>
+</div>
+
+</body>
+</html>
