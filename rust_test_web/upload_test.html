@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>上傳測試 + 歷史紀錄</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    input, button { margin: 0.5em 0; padding: 0.5em; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2em; }
+    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: center; }
+    .ok { color: green; }
+    .fail { color: red; }
+  </style>
+</head>
+<body>
+  <h1>📤 上傳 UID 資料</h1>
+  <form id="uploadForm">
+    <label>UID: <input type="text" id="uid" required></label><br>
+    <label>Direction: <input type="text" id="direction" required></label><br>
+    <label>Device Name: <input type="text" id="deviceName" required></label><br>
+    <label>Device Time: <input type="datetime-local" id="deviceTime" required></label><br>
+    <button type="submit">送出</button>
+  </form>
+
+  <div id="result"></div>
+
+  <h2>📋 歷史紀錄</h2>
+  <button onclick="fetchLogs()">重新載入紀錄</button>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>UID</th><th>方向</th><th>設備</th><th>時間</th><th>授權</th><th>使用者</th>
+      </tr>
+    </thead>
+    <tbody id="logTable"></tbody>
+  </table>
+
+  <script>
+    const server = "http://localhost:4000";
+
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const data = {
+        value1: uid.value,
+        value2: direction.value,
+        value3: deviceName.value,
+        value4: deviceTime.value
+      };
+
+      try {
+        const res = await fetch(`${server}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          result.innerHTML = `<p class="ok">✅ 上傳成功！授權：${json.authorized ? "✅ 是" : "❌ 否"}，使用者：${json.user}</p>`;
+          fetchLogs();
+        } else {
+          result.innerHTML = `<p class="fail">❌ 發生錯誤: ${JSON.stringify(json)}</p>`;
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="fail">❌ 發生錯誤: ${err}</p>`;
+      }
+    });
+
+    async function fetchLogs() {
+      try {
+        const res = await fetch(`${server}/logs`);
+        const logs = await res.json();
+
+        const table = logs.map(log => `
+          <tr>
+            <td>${log.id}</td>
+            <td>${log.uid}</td>
+            <td>${log.direction}</td>
+            <td>${log.device_name}</td>
+            <td>${log.device_time}</td>
+            <td>${log.authorized ? "✅" : "❌"}</td>
+            <td>${log.username}</td>
+          </tr>
+        `).join("");
+        document.getElementById("logTable").innerHTML = table;
+      } catch (e) {
+        document.getElementById("logTable").innerHTML = `<tr><td colspan="7">載入失敗：${e}</td></tr>`;
+      }
+    }
+
+    // 初始載入
+    fetchLogs();
+  </script>
+</body>
+</html>
