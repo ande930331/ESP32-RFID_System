@@ -1,85 +1,39 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RFID 系統首頁</title>
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f2f6fc;
-    margin: 0;
-    padding: 40px 20px;
-    text-align: center;
-  }
-
-  h1 {
-    color: #1f3c88;
-    margin-bottom: 40px;
-    font-size: 2.2em;
-  }
-
-  .menu {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 25px;
-  }
-
-  .card {
-    background: linear-gradient(135deg, #3498db, #6dd5ed);
-    color: white;
-    border-radius: 16px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-    width: 220px;
-    padding: 30px 20px;
-    text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.25);
-  }
-
-  .card h2 {
-    margin-bottom: 10px;
-    font-size: 1.4em;
-  }
-
-  .card p {
-    color: rgba(255,255,255,0.9);
-    font-size: 0.95em;
-  }
-
-  @media (max-width: 768px) {
-    .menu {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>RFID 系統首頁</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800">
+  <!-- 導覽列 -->
+  <nav class="bg-blue-600 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-6">
+      <a href="/index.html" class="font-semibold hover:text-blue-200">首頁</a>
+      <a href="/records.html" class="hover:text-blue-200">刷卡紀錄</a>
+      <a href="/users.html" class="hover:text-blue-200">授權用戶</a>
+      <a href="/chart.html" class="hover:text-blue-200">比例圖</a>
+    </div>
+  </nav>
 
-<h1>RFID 系統首頁</h1>
-
-<div class="menu">
-  <a href="/logs.html" class="card">
-    <h2>刷卡紀錄</h2>
-    <p>即時資料與歷史紀錄</p>
-  </a>
-
-  <a href="/stats.html#statsChart" class="card">
-    <h2>進出統計</h2>
-    <p>每日進出資料圖表</p>
-  </a>
-
-  <a href="/auth.html" class="card">
-    <h2>授權用戶管理</h2>
-    <p>新增 / 刪除 / 修改 UID 授權</p>
-  </a>
-</div>
-
+  <!-- 內容 -->
+  <main class="max-w-3xl mx-auto text-center py-16">
+    <h1 class="text-3xl font-bold mb-6 text-blue-700">RFID 智慧門禁系統</h1>
+    <p class="text-lg mb-10">管理刷卡紀錄、授權名單與進出統計</p>
+    <div class="grid sm:grid-cols-2 gap-6 justify-center">
+      <a href="/records.html" class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold text-blue-600 mb-2">刷卡紀錄</h2>
+        <p>查看 RFID 進出門紀錄</p>
+      </a>
+      <a href="/users.html" class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold text-blue-600 mb-2">授權用戶管理</h2>
+        <p>新增或修改授權名單</p>
+      </a>
+      <a href="/chart.html" class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition sm:col-span-2">
+        <h2 class="text-xl font-semibold text-blue-600 mb-2">進出比例統計</h2>
+        <p>以圖表查看 RFID 使用趨勢</p>
+      </a>
+    </div>
+  </main>
 </body>
 </html>

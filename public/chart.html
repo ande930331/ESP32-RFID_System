@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>進出比例圖</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <nav class="bg-blue-600 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-6">
+      <a href="/index.html" class="hover:text-blue-200">首頁</a>
+      <a href="/records.html" class="hover:text-blue-200">刷卡紀錄</a>
+      <a href="/users.html" class="hover:text-blue-200">授權用戶</a>
+      <a href="/chart.html" class="font-semibold hover:text-blue-200">比例圖</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto py-10 px-4 text-center">
+    <h2 class="text-2xl font-bold text-blue-700 mb-6">進出比例統計</h2>
+
+    <!-- 單日比例圖 -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8 mx-auto max-w-md">
+      <h3 class="text-lg font-semibold mb-4">單日進出比例圖</h3>
+      <div class="flex justify-center items-center gap-3 mb-4">
+        <input type="date" id="datePicker" class="border p-2 rounded">
+        <button onclick="loadChart()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">查詢</button>
+      </div>
+      <canvas id="pieChart" width="250" height="250"></canvas>
+    </div>
+
+    <!-- 區間折線圖 -->
+    <div class="bg-white rounded-xl shadow p-6 mx-auto max-w-3xl">
+      <h3 class="text-lg font-semibold mb-4">每日進出折線圖</h3>
+      <div class="flex flex-wrap justify-center gap-3 mb-4">
+        <label>起始日：<input type="date" id="startDate" class="border p-2 rounded"></label>
+        <label>結束日：<input type="date" id="endDate" class="border p-2 rounded"></label>
+        <button onclick="loadLineChart()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">查詢</button>
+      </div>
+      <canvas id="lineChart" height="250"></canvas>
+    </div>
+  </main>
+
+  <script>
+    let chart;
+    function loadChart() {
+      const date = document.getElementById('datePicker').value;
+      if (!date) return alert("請選擇日期");
+      fetch(`/api/stats?date=${date}`).then(r => r.json()).then(data => {
+        const ctx = document.getElementById('pieChart');
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+          type: 'pie',
+          data: { labels: ['IN', 'OUT'], datasets: [{ data: [data.IN || 0, data.OUT || 0], backgroundColor: ['#4caf50', '#f44336'] }] },
+          options: { plugins: { legend: { position: 'bottom' }, title: { display: true, text: `${date} 進出比例` } } }
+        });
+      });
+    }
+
+    function loadLineChart() {
+      const s = startDate.value, e = endDate.value;
+      if (!s || !e) return alert('請選擇起訖日期');
+      fetch(`/api/stats?start=${s}&end=${e}`).then(r => r.json()).then(data => {
+        const ctx = document.getElementById('lineChart');
+        if (window.lineChartInstance) window.lineChartInstance.destroy();
+        window.lineChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: data.map(d => d.date),
+            datasets: [
+              { label: 'IN', data: data.map(d => d.IN), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,0.1)', fill: true },
+              { label: 'OUT', data: data.map(d => d.OUT), borderColor: '#f44336', backgroundColor: 'rgba(244,67,54,0.1)', fill: true }
+            ]},
+          options: { responsive: true, plugins: { title: { display: true, text: '每日進出折線圖' } }, scales: { y: { beginAtZero: true } } }
+        });
+      });
+    }
+
+    window.onload = () => {
+      const today = new Date();
+      const sixDaysLater = new Date(today); sixDaysLater.setDate(today.getDate() + 6);
+      const fmt = d => d.toISOString().split('T')[0];
+      startDate.value = fmt(today); endDate.value = fmt(sixDaysLater);
+      loadChart(); loadLineChart();
+    };
+  </script>
+</body>
+</html>

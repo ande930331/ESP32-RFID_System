@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>授權用戶管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <nav class="bg-blue-600 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-6">
+      <a href="/index.html" class="hover:text-blue-200">首頁</a>
+      <a href="/records.html" class="hover:text-blue-200">刷卡紀錄</a>
+      <a href="/users.html" class="font-semibold hover:text-blue-200">授權用戶</a>
+      <a href="/chart.html" class="hover:text-blue-200">比例圖</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto py-10 px-4">
+    <h2 class="text-2xl font-bold text-center text-blue-700 mb-8">授權用戶管理</h2>
+    <form id="authForm" class="flex flex-wrap justify-center gap-3 mb-8">
+      <select id="uidSelect" required class="border rounded-lg p-2 w-48"></select>
+      <input type="text" id="username" placeholder="使用者名稱" required class="border rounded-lg p-2 w-48" />
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">新增授權</button>
+    </form>
+
+    <div class="text-center mb-4">
+      <input id="searchInput" type="text" placeholder="🔍 搜尋使用者名稱..." class="border p-2 rounded-lg w-64">
+    </div>
+
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="min-w-full border-collapse">
+        <thead class="bg-blue-50">
+          <tr class="text-left">
+            <th class="px-4 py-2">UID</th>
+            <th class="px-4 py-2">名稱</th>
+            <th class="px-4 py-2">操作</th>
+          </tr>
+        </thead>
+        <tbody id="authList"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    async function loadUnauthorizedUIDs() {
+      const res = await fetch('/api/unauthorized-uids');
+      const data = await res.json();
+      const select = document.getElementById('uidSelect');
+      select.innerHTML = '';
+      if (data.length === 0) select.innerHTML = `<option disabled>（無可用 UID）</option>`;
+      else data.forEach(uid => select.innerHTML += `<option value="${uid}">${uid}</option>`);
+    }
+
+    async function fetchAuthorized() {
+      const res = await fetch('/api/authorized');
+      const data = await res.json();
+      const tbody = document.getElementById('authList');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        tbody.innerHTML += `
+        <tr class="border-b hover:bg-blue-50">
+          <td class='px-4 py-2'>${row.uid}</td>
+          <td class='px-4 py-2'>
+            <span class="username-text">${row.username}</span>
+            <input type="text" class="username-input hidden border p-1 rounded" value="${row.username}" />
+          </td>
+          <td class='px-4 py-2'>
+            <button class="text-blue-600 hover:underline" onclick="enableEdit(this,'${row.uid}')">修改</button>
+            <button class="text-red-500 hover:underline" onclick="deleteAuth('${row.uid}')">刪除</button>
+          </td>
+        </tr>`;
+      });
+    }
+
+    async function deleteAuth(uid) {
+      if (!confirm(`確定刪除 ${uid}？`)) return;
+      await fetch('/api/authorized/' + uid, { method: 'DELETE' });
+      await fetchAuthorized(); await loadUnauthorizedUIDs();
+    }
+
+    function enableEdit(button, uid) {
+      const row = button.closest('tr');
+      const span = row.querySelector('.username-text');
+      const input = row.querySelector('.username-input');
+      if (button.textContent === '修改') {
+        span.classList.add('hidden'); input.classList.remove('hidden'); button.textContent = '儲存';
+      } else {
+        const newName = input.value.trim();
+        if (!newName) return alert('名稱不能為空');
+        fetch('/api/authorized/' + uid, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: newName })
+        }).then(r => r.json()).then(res => {
+          if (res.success) { span.textContent = newName; input.classList.add('hidden'); span.classList.remove('hidden'); button.textContent = '修改'; }
+          else alert('更新失敗');
+        });
+      }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const uid = document.getElementById('uidSelect').value;
+      const username = document.getElementById('username').value;
+      const res = await fetch('/api/authorized', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, username })
+      });
+      const result = await res.json();
+      if (result.success) { document.getElementById('username').value = ''; await fetchAuthorized(); await loadUnauthorizedUIDs(); }
+      else alert('新增失敗');
+    });
+
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const keyword = e.target.value.toLowerCase();
+      document.querySelectorAll('#authList tr').forEach(row => {
+        const name = row.querySelector('.username-text').textContent.toLowerCase();
+        row.style.display = name.includes(keyword) ? '' : 'none';
+      });
+    });
+
+    loadUnauthorizedUIDs(); fetchAuthorized();
+  </script>
+</body>
+</html>
