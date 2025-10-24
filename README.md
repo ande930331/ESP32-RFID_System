@@ -24,4 +24,15 @@
 -  **系統測試驗證**：使用 Rust 模擬資料傳輸，驗證後端穩定性與正確性。  
 
 ---
+### 系統架構
+![System Architecture](Image/架構.jpg)
 
+### 網頁介面
+### 首頁
+![Web Interface](Image/首頁.png)
+### 用戶管理
+![](Image/用戶管理.png)
+### 刷卡紀錄
+![](Image/刷卡紀錄.png)
+### 實體裝置
+![Hardware Demo](Image/A1.png)
