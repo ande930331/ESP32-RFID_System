@@ -35,4 +35,11 @@
 ### 刷卡紀錄
 ![](Image/刷卡紀錄.png)
 ### 實體裝置
-![Hardware Demo](Image/A1.png)
+![Hardware Demo](Image/刷卡機.png)
+### 刷卡機流程
+![](Image/刷卡機流程.jpg)
+### LINE BOT判斷
+![](Image/LINEBOT判斷.jpg)
+
+### WEB 流程
+![](Image/WEB流程圖.jpg)
